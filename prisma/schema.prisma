@@ -1,0 +1,188 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+/// --------------------
+/// Enums (domain)
+/// --------------------
+enum TrackStatus {
+  draft
+  published
+}
+
+enum ModuleStatus {
+  todo
+  in_progress
+  done
+}
+
+/// --------------------
+/// Auth.js (Prisma Adapter)
+/// --------------------
+model User {
+  id            String          @id @default(cuid())
+  name          String?
+  email         String          @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  // Optional for WebAuthn support
+  Authenticator Authenticator[]
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Track     Track[]
+  Reminder  Reminder[]
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// Optional for WebAuthn support
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+}
+
+/// --------------------
+/// Domain models
+/// --------------------
+model Track {
+  id          String      @id @default(cuid())
+  userId      String
+  title       String
+  description String?     @db.Text
+  goals       String?     @db.Text
+  status      TrackStatus @default(draft)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  modules   Module[]
+  trackTags TrackTag[]
+  reminders Reminder[]
+
+  @@index([userId, status])
+  @@index([createdAt])
+}
+
+model Module {
+  id          String       @id @default(cuid())
+  trackId     String
+  title       String
+  externalUrl String?      @db.VarChar(2048)
+  startDate   DateTime?
+  dueDate     DateTime?
+  status      ModuleStatus @default(todo)
+  position    Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  track     Track         @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  checks    ModuleCheck[]
+  reminders Reminder[]
+
+  @@index([trackId, position])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model ModuleCheck {
+  id        String        @id @default(cuid())
+  moduleId  String
+  changedAt DateTime      @default(now())
+  oldStatus ModuleStatus?
+  newStatus ModuleStatus
+  note      String?       @db.Text
+
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@index([moduleId, changedAt])
+}
+
+model Tag {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  trackTags TrackTag[]
+}
+
+model TrackTag {
+  trackId String
+  tagId   String
+
+  track Track @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([trackId, tagId])
+  @@index([tagId])
+}
+
+model Reminder {
+  id       String    @id @default(cuid())
+  userId   String
+  trackId  String?
+  moduleId String?
+  runAt    DateTime
+  sentAt   DateTime?
+  message  String?   @db.Text
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track  Track?  @relation(fields: [trackId], references: [id], onDelete: SetNull)
+  module Module? @relation(fields: [moduleId], references: [id], onDelete: SetNull)
+
+  @@index([userId, runAt])
+  @@index([trackId])
+  @@index([moduleId])
+}
