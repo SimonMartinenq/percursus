@@ -13,11 +13,11 @@ import {
 } from "lucide-react";
 
 const nav = [
-  { href: "/app", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/app/tracks", label: "Parcours", icon: BookOpen },
-  { href: "/app/calendar", label: "Calendrier", icon: CalendarDays },
-  { href: "/app/analytics", label: "Statistiques", icon: BarChart3 },
-  { href: "/app/settings", label: "Réglages", icon: Settings },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/tracks", label: "Parcours", icon: BookOpen },
+  { href: "/calendar", label: "Calendrier", icon: CalendarDays },
+  { href: "/analytics", label: "Statistiques", icon: BarChart3 },
+  { href: "/settings", label: "Réglages", icon: Settings },
 ];
 
 export function Sidebar() {
