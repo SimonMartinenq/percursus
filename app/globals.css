@@ -116,7 +116,20 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.rbc-calendar {
+  @apply text-sm;
+}
+
+.rbc-toolbar {
+  @apply flex justify-between items-center mb-2;
+}
+
+.rbc-event {
+  @apply rounded-md text-white px-2 py-1;
 }

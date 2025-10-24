@@ -7,6 +7,7 @@ import {
   createModuleSchema,
   updateModuleSchema,
 } from "@/lib/validators/module";
+import { revalidatePath } from "next/cache";
 
 function toErrorRecord(issue: any) {
   const out: Record<string, string[]> = {};
@@ -114,6 +115,7 @@ export async function deleteModule(fd: FormData) {
     if (!mod) return { ok: false, errors: { form: ["Module introuvable"] } };
 
     await prisma.module.delete({ where: { id } });
+    revalidatePath("/tracks[id]");
     return { ok: true };
   } catch (e) {
     console.error(e);
