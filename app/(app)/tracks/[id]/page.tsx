@@ -28,6 +28,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ModuleForm } from "@/components/ModuleForm";
+import { Progress } from "@/components/ui/progress";
 
 export default async function TrackDetailPage({
   params,
@@ -41,11 +42,24 @@ export default async function TrackDetailPage({
     include: {
       modules: {
         orderBy: { position: "asc" },
+        select: {
+          id: true,
+          title: true,
+          externalUrl: true,
+          startDate: true,
+          dueDate: true,
+          status: true,
+          position: true,
+        },
       },
     },
   });
 
   if (!track) return notFound();
+  const totalModules = track.modules.length;
+  const doneModules = track.modules.filter((m) => m.status === "done").length;
+  const progress =
+    totalModules === 0 ? 0 : Math.round((doneModules / totalModules) * 100);
 
   return (
     <div className="space-y-6">
@@ -87,6 +101,20 @@ export default async function TrackDetailPage({
         </div>
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Progression</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Avancement global</span>
+              <span>{progress}%</span>
+            </div>
+            <Progress value={progress} className="h-2" />
+          </div>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>Éditer le parcours</CardTitle>

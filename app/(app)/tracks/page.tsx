@@ -13,6 +13,8 @@ import { requireUser } from "@/lib/auth-helper";
 import { prisma } from "@/prisma";
 import { TrackForm } from "@/components/TrackForm";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { computeProgress } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,9 @@ export default async function TracksPage() {
   const tracks = await prisma.track.findMany({
     where: { userId: user.id! },
     orderBy: { updatedAt: "desc" },
+    include: {
+      modules: { select: { status: true } },
+    },
   });
 
   return (
@@ -71,6 +76,15 @@ export default async function TracksPage() {
                   <p className="mt-4 text-xs text-muted-foreground">
                     MAJ : {new Date(t.updatedAt).toLocaleString()}
                   </p>
+                  {t.modules.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Progression</span>
+                        <span>{computeProgress(t)}%</span>
+                      </div>
+                      <Progress value={computeProgress(t)} className="h-2" />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </Link>
