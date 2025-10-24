@@ -108,17 +108,7 @@ export default async function TrackDetailPage({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Modules ({track.modules.length})</CardTitle>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button>Ajouter un module</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-xl">
-              <DialogHeader>
-                <DialogTitle>Nouveau module</DialogTitle>
-              </DialogHeader>
-              <ModuleForm mode="create" trackId={track.id} />
-            </DialogContent>
-          </Dialog>
+          <ModuleForm mode="create" trackId={track.id} />
         </CardHeader>
         <CardContent>
           {track.modules.length === 0 ? (
@@ -175,38 +165,22 @@ export default async function TrackDetailPage({
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">
-                      {/* Edit in dialog */}
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            Éditer
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-xl">
-                          <DialogHeader>
-                            <DialogTitle>Éditer le module</DialogTitle>
-                          </DialogHeader>
-                          <ModuleForm
-                            mode="edit"
-                            defaultValues={{
-                              id: m.id,
-                              trackId: track.id,
-                              title: m.title,
-                              externalUrl: m.externalUrl ?? "",
-                              startDate: m.startDate
-                                ? new Date(m.startDate)
-                                    .toISOString()
-                                    .slice(0, 16)
-                                : "",
-                              dueDate: m.dueDate
-                                ? new Date(m.dueDate).toISOString().slice(0, 16)
-                                : "",
-                              status: m.status as any,
-                            }}
-                          />
-                        </DialogContent>
-                      </Dialog>
-
+                      <ModuleForm
+                        mode="edit"
+                        defaultValues={{
+                          id: m.id,
+                          trackId: track.id,
+                          title: m.title,
+                          externalUrl: m.externalUrl ?? "",
+                          startDate: m.startDate
+                            ? new Date(m.startDate).toISOString().slice(0, 16)
+                            : "",
+                          dueDate: m.dueDate
+                            ? new Date(m.dueDate).toISOString().slice(0, 16)
+                            : "",
+                          status: m.status as any,
+                        }}
+                      />
                       {/* Delete */}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
