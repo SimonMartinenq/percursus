@@ -20,13 +20,7 @@ import { requireUser } from "@/lib/auth-helper";
 import { prisma } from "@/prisma";
 import { TrackForm } from "@/components/TrackForm";
 import { deleteModule } from "@/lib/actions/module";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+
 import { ModuleForm } from "@/components/ModuleForm";
 import { Progress } from "@/components/ui/progress";
 
@@ -200,12 +194,8 @@ export default async function TrackDetailPage({
                           trackId: track.id,
                           title: m.title,
                           externalUrl: m.externalUrl ?? "",
-                          startDate: m.startDate
-                            ? new Date(m.startDate).toISOString().slice(0, 16)
-                            : "",
-                          dueDate: m.dueDate
-                            ? new Date(m.dueDate).toISOString().slice(0, 16)
-                            : "",
+                          startDate: m.startDate?.toISOString(),
+                          dueDate: m.dueDate?.toISOString(),
                           status: m.status as any,
                         }}
                       />

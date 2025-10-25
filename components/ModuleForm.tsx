@@ -1,4 +1,3 @@
-// /components/ModuleForm.tsx
 "use client";
 
 import * as React from "react";
@@ -23,6 +22,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
+
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 export type ModuleFormValues = {
   id?: string;
@@ -92,6 +102,9 @@ export function ModuleForm(props: Props) {
     });
   }
 
+  // Convertir les dates ISO en objets Date
+  const startDate = values.startDate ? new Date(values.startDate) : undefined;
+  const dueDate = values.dueDate ? new Date(values.dueDate) : undefined;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -136,12 +149,32 @@ export function ModuleForm(props: Props) {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="startDate">Début</Label>
-              <Input
-                id="startDate"
-                type="datetime-local"
-                value={values.startDate ?? ""}
-                onChange={(e) => handleChange("startDate", e.target.value)}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate
+                      ? format(startDate, "PPP", { locale: fr })
+                      : "Choisir une date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={(date) =>
+                      handleChange("startDate", date?.toISOString() ?? "")
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               {errors?.startDate && (
                 <p className="text-sm text-red-600">
                   {errors.startDate.join(", ")}
@@ -150,12 +183,32 @@ export function ModuleForm(props: Props) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="dueDate">Échéance</Label>
-              <Input
-                id="dueDate"
-                type="datetime-local"
-                value={values.dueDate ?? ""}
-                onChange={(e) => handleChange("dueDate", e.target.value)}
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dueDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dueDate
+                      ? format(dueDate, "PPP", { locale: fr })
+                      : "Choisir une date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={(date) =>
+                      handleChange("dueDate", date?.toISOString() ?? "")
+                    }
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               {errors?.dueDate && (
                 <p className="text-sm text-red-600">
                   {errors.dueDate.join(", ")}
