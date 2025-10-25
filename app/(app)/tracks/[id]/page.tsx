@@ -1,7 +1,5 @@
-//(app)/track/:id/page.tsx
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { deleteTrack } from "@/lib/actions/track";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +18,6 @@ import { requireUser } from "@/lib/auth-helper";
 import { prisma } from "@/prisma";
 import { TrackForm } from "@/components/TrackForm";
 import { deleteModule } from "@/lib/actions/module";
-
 import { ModuleForm } from "@/components/ModuleForm";
 import { Progress } from "@/components/ui/progress";
 
@@ -31,25 +28,30 @@ export default async function TrackDetailPage({
 }) {
   const user = await requireUser();
   const { id } = await params;
+
   const track = await prisma.track.findFirst({
     where: { id: id, userId: user.id! },
     include: {
       modules: {
         orderBy: { position: "asc" },
-        select: {
-          id: true,
-          title: true,
-          externalUrl: true,
-          startDate: true,
-          dueDate: true,
-          status: true,
-          position: true,
+        include: {
+          checks: {
+            orderBy: { changedAt: "desc" },
+            select: {
+              id: true,
+              changedAt: true,
+              oldStatus: true,
+              newStatus: true,
+              note: true,
+            },
+          },
         },
       },
     },
   });
 
   if (!track) return notFound();
+
   const totalModules = track.modules.length;
   const doneModules = track.modules.filter((m) => m.status === "done").length;
   const progress =
@@ -79,8 +81,8 @@ export default async function TrackDetailPage({
               <AlertDialogHeader>
                 <AlertDialogTitle>Supprimer ce parcours ?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Cette action est irréversible. Les modules liés (quand tu les
-                  ajouteras) seront aussi supprimés.
+                  Cette action est irréversible. Les modules liés seront aussi
+                  supprimés.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <form action={deleteTrack}>
@@ -109,6 +111,7 @@ export default async function TrackDetailPage({
           </div>
         </CardContent>
       </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Éditer le parcours</CardTitle>
@@ -140,7 +143,7 @@ export default async function TrackDetailPage({
           ) : (
             <ul className="space-y-3">
               {track.modules.map((m) => (
-                <li key={m.id} className="rounded-lg border p-4">
+                <li key={m.id} className="rounded-lg border p-4 space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
@@ -228,6 +231,37 @@ export default async function TrackDetailPage({
                       </AlertDialog>
                     </div>
                   </div>
+
+                  {m.checks.length > 0 && (
+                    <div className="border-t pt-2 mt-2">
+                      <p className="text-xs font-semibold mb-1 text-muted-foreground">
+                        Historique d’activité :
+                      </p>
+                      <ul className="space-y-1 text-xs text-muted-foreground">
+                        {m.checks.map((c) => (
+                          <li key={c.id}>
+                            <span className="font-medium">
+                              {new Date(c.changedAt).toLocaleString()}
+                            </span>{" "}
+                            {c.oldStatus === "todo"
+                              ? "À faire"
+                              : c.oldStatus === "in_progress"
+                              ? "En cours"
+                              : c.oldStatus === "done"
+                              ? "Terminé"
+                              : "Pas de status"}{" "}
+                            →{" "}
+                            {c.newStatus === "todo"
+                              ? "À faire"
+                              : c.newStatus === "in_progress"
+                              ? "En cours"
+                              : "Terminé"}
+                            {c.note ? ` (${c.note})` : ""}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
