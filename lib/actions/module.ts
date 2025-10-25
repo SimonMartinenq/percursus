@@ -1,124 +1,152 @@
-// /lib/actions/module.ts
 "use server";
 
 import { prisma } from "@/prisma";
-import { requireUser } from "@/lib/auth-helper";
-import {
-  createModuleSchema,
-  updateModuleSchema,
-} from "@/lib/validators/module";
 import { revalidatePath } from "next/cache";
+import { requireUser } from "@/lib/auth-helper";
 
-function toErrorRecord(issue: any) {
-  const out: Record<string, string[]> = {};
-  for (const e of issue) {
-    const k = e.path?.[0] ?? "form";
-    out[k] = [...(out[k] ?? []), e.message];
-  }
-  return out;
-}
+export async function createModule(formData: FormData) {
+  const user = await requireUser();
 
-export async function createModule(fd: FormData) {
   try {
-    const user = await requireUser();
-    const payload = Object.fromEntries(fd.entries());
-    const parsed = createModuleSchema.safeParse(payload);
-    if (!parsed.success) {
-      return { ok: false, errors: toErrorRecord(parsed.error.issues) };
+    const trackId = formData.get("trackId") as string;
+    const title = (formData.get("title") as string)?.trim();
+    const externalUrl = (formData.get("externalUrl") as string)?.trim() || null;
+    const startDateStr = formData.get("startDate") as string;
+    const dueDateStr = formData.get("dueDate") as string;
+    const status =
+      (formData.get("status") as "todo" | "in_progress" | "done") ?? "todo";
+
+    if (!title) {
+      return { ok: false, errors: { title: ["Le titre est requis."] } };
     }
 
-    // Secure: verifier ownership du track
     const track = await prisma.track.findFirst({
-      where: { id: parsed.data.trackId, userId: user.id! },
-      select: { id: true },
-    });
-    if (!track)
-      return { ok: false, errors: { form: ["Parcours introuvable"] } };
-
-    // position = dernier + 1
-    const last = await prisma.module.findFirst({
-      where: { trackId: track.id },
-      orderBy: { position: "desc" },
-      select: { position: true },
-    });
-    const nextPos = (last?.position ?? -1) + 1;
-
-    const created = await prisma.module.create({
-      data: {
-        trackId: track.id,
-        title: parsed.data.title,
-        externalUrl: parsed.data.externalUrl,
-        startDate: parsed.data.startDate
-          ? new Date(parsed.data.startDate)
-          : undefined,
-        dueDate: parsed.data.dueDate
-          ? new Date(parsed.data.dueDate)
-          : undefined,
-        status: parsed.data.status,
-        position: nextPos,
-      },
-      select: { id: true },
+      where: { id: trackId, userId: user.id },
     });
 
-    return { ok: true, id: created.id };
-  } catch (e) {
-    console.error(e);
-    return { ok: false, errors: { form: ["Erreur serveur"] } };
-  }
-}
-
-export async function updateModule(fd: FormData) {
-  try {
-    const user = await requireUser();
-    const payload = Object.fromEntries(fd.entries());
-    const parsed = updateModuleSchema.safeParse(payload);
-    if (!parsed.success) {
-      return { ok: false, errors: toErrorRecord(parsed.error.issues) };
+    if (!track) {
+      return {
+        ok: false,
+        errors: { form: ["Parcours introuvable ou non autorisé."] },
+      };
     }
 
-    const mod = await prisma.module.findFirst({
-      where: { id: parsed.data.id, track: { userId: user.id! } },
-      select: { id: true },
-    });
-    if (!mod) return { ok: false, errors: { form: ["Module introuvable"] } };
+    const startDate = startDateStr ? new Date(startDateStr) : null;
+    const dueDate = dueDateStr ? new Date(dueDateStr) : null;
 
-    await prisma.module.update({
-      where: { id: parsed.data.id },
+    await prisma.module.create({
       data: {
-        title: parsed.data.title,
-        externalUrl: parsed.data.externalUrl,
-        startDate: parsed.data.startDate
-          ? new Date(parsed.data.startDate)
-          : null,
-        dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
-        status: parsed.data.status,
+        trackId,
+        title,
+        externalUrl,
+        startDate,
+        dueDate,
+        status,
+        checks: {
+          create: {
+            newStatus: status,
+            note: "Module créé",
+          },
+        },
       },
     });
 
+    revalidatePath(`/tracks/${trackId}`);
     return { ok: true };
-  } catch (e) {
-    console.error(e);
-    return { ok: false, errors: { form: ["Erreur serveur"] } };
+  } catch (error) {
+    console.error("[createModule]", error);
+    return { ok: false, errors: { form: ["Une erreur est survenue."] } };
   }
 }
 
-export async function deleteModule(fd: FormData) {
-  try {
-    const user = await requireUser();
-    const id = String(fd.get("id") ?? "");
-    if (!id) return { ok: false, errors: { id: ["id requis"] } };
+export async function updateModule(formData: FormData) {
+  const user = await requireUser();
 
-    const mod = await prisma.module.findFirst({
-      where: { id, track: { userId: user.id! } },
-      select: { id: true },
+  try {
+    const id = formData.get("id") as string;
+    const title = (formData.get("title") as string)?.trim();
+    const externalUrl = (formData.get("externalUrl") as string)?.trim() || null;
+    const startDateStr = formData.get("startDate") as string;
+    const dueDateStr = formData.get("dueDate") as string;
+    const newStatus =
+      (formData.get("status") as "todo" | "in_progress" | "done") ?? "todo";
+
+    if (!id || !title) {
+      return { ok: false, errors: { form: ["Champs manquants."] } };
+    }
+
+    const existing = await prisma.module.findFirst({
+      where: {
+        id,
+        track: { userId: user.id },
+      },
+      select: { id: true, trackId: true, status: true },
     });
-    if (!mod) return { ok: false, errors: { form: ["Module introuvable"] } };
+
+    if (!existing) {
+      return {
+        ok: false,
+        errors: { form: ["Module introuvable ou non autorisé."] },
+      };
+    }
+
+    const startDate = startDateStr ? new Date(startDateStr) : null;
+    const dueDate = dueDateStr ? new Date(dueDateStr) : null;
+
+    const updated = await prisma.module.update({
+      where: { id },
+      data: {
+        title,
+        externalUrl,
+        startDate,
+        dueDate,
+        status: newStatus,
+      },
+    });
+
+    if (existing.status !== newStatus) {
+      await prisma.moduleCheck.create({
+        data: {
+          moduleId: id,
+          oldStatus: existing.status,
+          newStatus,
+          note: `Statut modifié de ${existing.status} → ${newStatus}`,
+        },
+      });
+    }
+
+    revalidatePath(`/tracks/${existing.trackId}`);
+    return { ok: true };
+  } catch (error) {
+    console.error("[updateModule]", error);
+    return { ok: false, errors: { form: ["Une erreur est survenue."] } };
+  }
+}
+
+export async function deleteModule(formData: FormData) {
+  const user = await requireUser();
+
+  try {
+    const id = formData.get("id") as string;
+
+    const module = await prisma.module.findFirst({
+      where: { id, track: { userId: user.id } },
+      select: { id: true, trackId: true },
+    });
+
+    if (!module) {
+      return {
+        ok: false,
+        errors: { form: ["Module introuvable ou non autorisé."] },
+      };
+    }
 
     await prisma.module.delete({ where: { id } });
-    revalidatePath("/tracks[id]");
+
+    revalidatePath(`/tracks/${module.trackId}`);
     return { ok: true };
-  } catch (e) {
-    console.error(e);
-    return { ok: false, errors: { form: ["Erreur serveur"] } };
+  } catch (error) {
+    console.error("[deleteModule]", error);
+    return { ok: false, errors: { form: ["Une erreur est survenue."] } };
   }
 }
