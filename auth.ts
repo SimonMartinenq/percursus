@@ -7,4 +7,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   providers: [GitHub],
+  callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Après connexion, redirige vers /dashboard
+      if (url.startsWith("/")) return `${baseUrl}/dashboard`;
+      return baseUrl;
+    },
+  },
 });
