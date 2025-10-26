@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { Track, Module } from "@prisma/client";
-import { useDebounce } from "@/lib/hooks/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 
 type SearchResult = {
   tracks: Pick<Track, "id" | "title" | "description">[];

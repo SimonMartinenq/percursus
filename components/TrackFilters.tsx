@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useDebounce } from "@/lib/hooks/use-debounce";
+import { useDebounce } from "@/hooks/use-debounce";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CalendarIcon, X } from "lucide-react";
