@@ -15,18 +15,78 @@ import { TrackForm } from "@/components/TrackForm";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { computeProgress } from "@/lib/utils";
+import { TrackFilters } from "@/components/TrackFilters";
 
 export const dynamic = "force-dynamic";
 
-export default async function TracksPage() {
+export default async function TracksPage({
+  searchParams,
+}: {
+  searchParams?: Record<string, string | string[] | undefined>;
+}) {
   const user = await requireUser();
+  searchParams = await searchParams;
+  // Charger tous les tags disponibles pour ce user
+  const tags = await prisma.tag.findMany({
+    where: { trackTags: { some: { track: { userId: user.id } } } },
+    select: { name: true },
+  });
+  const availableTags = tags.map((t) => t.name);
+
+  // Construction du filtre Prisma
+  const where: any = {
+    userId: user.id,
+    ...(searchParams?.q
+      ? {
+          OR: [
+            { title: { contains: searchParams.q, mode: "insensitive" } },
+            { description: { contains: searchParams.q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+    ...(searchParams?.status ? { status: searchParams.status } : {}),
+    ...(searchParams?.updatedAfter
+      ? { updatedAt: { gte: new Date(searchParams.updatedAfter as string) } }
+      : {}),
+    ...(searchParams?.updatedBefore
+      ? { updatedAt: { lte: new Date(searchParams.updatedBefore as string) } }
+      : {}),
+    ...(searchParams?.tags
+      ? {
+          trackTags: {
+            some: {
+              tag: {
+                name: {
+                  in: Array.isArray(searchParams.tags)
+                    ? searchParams.tags
+                    : [searchParams.tags],
+                },
+              },
+            },
+          },
+        }
+      : {}),
+  };
+
+  // Tri
+  const [sortField, sortOrder] = (searchParams?.sort as string)?.split("_") ?? [
+    "updatedAt",
+    "desc",
+  ];
 
   const tracks = await prisma.track.findMany({
-    where: { userId: user.id! },
-    orderBy: { updatedAt: "desc" },
-    include: {
-      modules: { select: { status: true } },
-    },
+    where,
+    orderBy: { [sortField]: sortOrder },
+    include: { modules: { select: { status: true } } },
+  });
+
+  // Progression
+  const progressMin = Number(searchParams?.progressMin ?? 0);
+  const progressMax = Number(searchParams?.progressMax ?? 100);
+
+  const filteredTracks = tracks.filter((t) => {
+    const progress = computeProgress(t);
+    return progress >= progressMin && progress <= progressMax;
   });
 
   return (
@@ -46,15 +106,17 @@ export default async function TracksPage() {
         </Dialog>
       </div>
 
-      {tracks.length === 0 ? (
+      <TrackFilters availableTags={availableTags} />
+
+      {filteredTracks.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Aucun parcours pour l’instant. Crée ton premier !
+            Aucun parcours trouvé.
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tracks.map((t) => (
+          {filteredTracks.map((t) => (
             <Link key={t.id} href={`/tracks/${t.id}`}>
               <Card className="h-full hover:shadow-md transition-shadow">
                 <CardHeader>

@@ -1,3 +1,4 @@
+// /app/api/search/route.ts
 import { requireUser } from "@/lib/auth-helper";
 import { prisma } from "@/prisma";
 import { NextResponse } from "next/server";
