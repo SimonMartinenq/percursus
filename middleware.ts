@@ -5,7 +5,6 @@ import type { NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
   const session = await auth();
-  console.log("Session", session);
   const { pathname } = req.nextUrl;
 
   // Si connecté et sur la page d'accueil -> /dashboard

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 export function LoginButton() {
   return (
     <Button
-      onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
+      onClick={() => signIn("", { callbackUrl: "/dashboard" })}
       variant="default"
       size="sm"
     >
