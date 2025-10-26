@@ -16,8 +16,8 @@ const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/tracks", label: "Parcours", icon: BookOpen },
   { href: "/calendar", label: "Calendrier", icon: CalendarDays },
-  { href: "/analytics", label: "Statistiques", icon: BarChart3 },
-  { href: "/settings", label: "Réglages", icon: Settings },
+  { href: "/#analytics", label: "Statistiques", icon: BarChart3 },
+  { href: "/#settings", label: "Réglages", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -25,9 +25,6 @@ export function Sidebar() {
 
   return (
     <aside className="hidden md:flex md:flex-col w-64 shrink-0 border-r h-dvh sticky top-0">
-      <div className="h-14 flex items-center px-4 border-b font-semibold">
-        Learning Tracker
-      </div>
       <nav className="flex-1 p-3">
         <ul className="space-y-1">
           {nav.map((item) => {
