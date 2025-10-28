@@ -1,4 +1,3 @@
-// components/TrackForm.tsx
 "use client";
 
 import * as React from "react";
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { createTrack, updateTrack } from "@/lib/actions/track";
 import { TagSelector } from "./TagSelector";
+import { toast } from "sonner";
 
 type BaseValues = {
   title: string;
@@ -27,15 +27,19 @@ type BaseValues = {
 };
 
 type Props =
-  | { mode: "create"; defaultValues?: Partial<BaseValues>; id?: never }
-  | { mode: "edit"; id: string; defaultValues: BaseValues };
+  | {
+      mode: "create";
+      defaultValues?: Partial<BaseValues>;
+      id?: never;
+      onCreated?: () => void;
+    }
+  | { mode: "edit"; id: string; defaultValues: BaseValues; onCreated?: never };
 
 export function TrackForm(props: Props) {
   const isEdit = props.mode === "edit";
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Record<string, string[]>>({});
-
   const [values, setValues] = useState<BaseValues>({
     title: props.defaultValues?.title ?? "",
     description: props.defaultValues?.description ?? "",
@@ -46,6 +50,16 @@ export function TrackForm(props: Props) {
 
   function set<K extends keyof BaseValues>(key: K, v: BaseValues[K]) {
     setValues((s) => ({ ...s, [key]: v }));
+  }
+
+  function resetForm() {
+    setValues({
+      title: "",
+      description: "",
+      goals: "",
+      status: "draft",
+      tags: [],
+    });
   }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -66,6 +80,14 @@ export function TrackForm(props: Props) {
         return;
       }
       router.refresh();
+
+      if (isEdit) {
+        toast.success("Parcours mis à jour avec succès");
+      } else {
+        toast.success("Parcours créé avec succès");
+        resetForm();
+        props.onCreated?.();
+      }
     });
   }
 
@@ -94,11 +116,6 @@ export function TrackForm(props: Props) {
           rows={4}
           placeholder="Objectif général, sources, etc."
         />
-        {errors?.description && (
-          <p className="text-sm text-red-600">
-            {errors.description.join(", ")}
-          </p>
-        )}
       </div>
 
       <div className="space-y-2">
@@ -110,9 +127,6 @@ export function TrackForm(props: Props) {
           rows={4}
           placeholder="Compétences visées, jalons, critères de succès…"
         />
-        {errors?.goals && (
-          <p className="text-sm text-red-600">{errors.goals.join(", ")}</p>
-        )}
       </div>
 
       <div className="space-y-2">
@@ -129,9 +143,6 @@ export function TrackForm(props: Props) {
             <SelectItem value="published">Publié</SelectItem>
           </SelectContent>
         </Select>
-        {errors?.status && (
-          <p className="text-sm text-red-600">{errors.status.join(", ")}</p>
-        )}
       </div>
 
       <div className="space-y-2">
@@ -140,9 +151,6 @@ export function TrackForm(props: Props) {
           defaultTags={values.tags}
           onChange={(t) => set("tags", t)}
         />
-        {errors?.tags && (
-          <p className="text-sm text-red-600">{errors.tags.join(", ")}</p>
-        )}
       </div>
 
       <div className="flex gap-3">

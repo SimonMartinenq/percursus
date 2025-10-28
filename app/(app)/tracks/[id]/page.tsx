@@ -21,6 +21,7 @@ import { TrackForm } from "@/components/TrackForm";
 import { deleteModule } from "@/lib/actions/module";
 import { ModuleForm } from "@/components/ModuleForm";
 import { Progress } from "@/components/ui/progress";
+import { DeleteTrackButton } from "@/components/DeleteTrackButton";
 
 export default async function TrackDetailPage({
   params,
@@ -89,13 +90,7 @@ export default async function TrackDetailPage({
                   supprimés.
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <form action={deleteTrack}>
-                <input type="hidden" name="id" value={track.id} />
-                <div className="mt-4 flex justify-end gap-2">
-                  <AlertDialogCancel>Annuler</AlertDialogCancel>
-                  <AlertDialogAction type="submit">Supprimer</AlertDialogAction>
-                </div>
-              </form>
+              <DeleteTrackButton id={track.id} />
             </AlertDialogContent>
           </AlertDialog>
         </div>

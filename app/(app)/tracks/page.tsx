@@ -1,14 +1,7 @@
 // (app)/tracks/page.tsx
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+
 import { requireUser } from "@/lib/auth-helper";
 import { prisma } from "@/prisma";
 import { TrackForm } from "@/components/TrackForm";
@@ -16,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { computeProgress } from "@/lib/utils";
 import { TrackFilters } from "@/components/TrackFilters";
+import CreateTrackModal from "@/components/CreateTrackModal";
 
 export const dynamic = "force-dynamic";
 
@@ -94,17 +88,7 @@ export default async function TracksPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Mes parcours</h1>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>Créer un parcours</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-xl">
-            <DialogHeader>
-              <DialogTitle>Nouveau parcours</DialogTitle>
-            </DialogHeader>
-            <TrackForm mode="create" />
-          </DialogContent>
-        </Dialog>
+        <CreateTrackModal />
       </div>
 
       <TrackFilters availableTags={availableTags} />

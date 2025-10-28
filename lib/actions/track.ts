@@ -8,6 +8,7 @@ import { requireUser } from "../auth-helper";
 import { prisma } from "@/prisma";
 import { TrackStatus } from "@prisma/client";
 import { upsertManyTagsByName } from "@/lib/actions/tag";
+import { redirect } from "next/navigation";
 
 export async function createTrack(formData: FormData) {
   const user = await requireUser();
