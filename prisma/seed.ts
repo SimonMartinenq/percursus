@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   // 1) User (si existe déjà par Auth.js, on le réutilise)
-  const email = "martinenq95@gmail.com";
+  const email = "seed@exemple.com";
 
   let user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
