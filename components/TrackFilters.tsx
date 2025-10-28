@@ -224,7 +224,7 @@ export function TrackFilters({ availableTags }: TrackFiltersProps) {
                 "cursor-pointer select-none transition",
                 selectedTags.includes(tag)
                   ? "bg-primary text-primary-foreground"
-                  : "bg-secondary"
+                  : "bg-secondary text-primary"
               )}
             >
               {tag}

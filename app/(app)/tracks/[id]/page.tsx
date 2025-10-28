@@ -1,6 +1,7 @@
+// (app)/tracks/[id]/page.tsx
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { deleteTrack } from "@/lib/actions/track";
+import { deleteTrack, updateTrack } from "@/lib/actions/track";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,8 +31,9 @@ export default async function TrackDetailPage({
   const { id } = await params;
 
   const track = await prisma.track.findFirst({
-    where: { id: id, userId: user.id! },
+    where: { id, userId: user.id! },
     include: {
+      trackTags: { include: { tag: true } },
       modules: {
         orderBy: { position: "asc" },
         include: {
@@ -56,6 +58,8 @@ export default async function TrackDetailPage({
   const doneModules = track.modules.filter((m) => m.status === "done").length;
   const progress =
     totalModules === 0 ? 0 : Math.round((doneModules / totalModules) * 100);
+
+  const tagNames = track.trackTags.map((tt) => tt.tag.name);
 
   return (
     <div className="space-y-6">
@@ -125,8 +129,18 @@ export default async function TrackDetailPage({
               description: track.description ?? "",
               goals: track.goals ?? "",
               status: track.status as "draft" | "published",
+              tags: tagNames,
             }}
           />
+          {tagNames.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-1">
+              {tagNames.map((t) => (
+                <Badge key={t} variant="outline">
+                  {t}
+                </Badge>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   // 1) User (si existe déjà par Auth.js, on le réutilise)
-  const email = "seed@example.com";
+  const email = "martinenq95@gmail.com";
 
   let user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
@@ -17,88 +17,176 @@ async function main() {
     });
   }
 
-  // 2) Track (parcours)
-  const track = await prisma.track.create({
+  // --- Tags de base
+  const tags = await Promise.all(
+    ["TypeScript", "React", "Next.js", "Node.js", "Front-End", "API"].map(
+      async (name) =>
+        prisma.tag.upsert({
+          where: { name },
+          update: {},
+          create: { name },
+        })
+    )
+  );
+
+  // --- Premier parcours : "Roadmap TypeScript"
+  const track1 = await prisma.track.create({
     data: {
       userId: user.id,
-      title: "Apprendre TypeScript en 7 jours",
+      title: "Roadmap TypeScript",
       description:
-        "Parcours rapide pour monter en compétences sur TypeScript avec ressources externes.",
+        "Découverte et approfondissement de TypeScript avec des projets pratiques.",
       goals:
-        "Comprendre les types, generics, utility types; config tsconfig; intégrer TS dans Next.js.",
+        "Maîtriser les bases du typage, des interfaces et des génériques. Être capable de typer un projet complet.",
       status: TrackStatus.published,
-      modules: {
-        create: [
-          {
-            title: "Intro & Types de base",
-            externalUrl:
-              "https://www.typescriptlang.org/docs/handbook/2/everyday-types.html",
-            startDate: new Date(),
-            dueDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
-            status: ModuleStatus.in_progress,
-            position: 1,
-          },
-          {
-            title: "Generics & Utility Types",
-            externalUrl:
-              "https://www.typescriptlang.org/docs/handbook/2/generics.html",
-            startDate: new Date(),
-            dueDate: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000),
-            status: ModuleStatus.todo,
-            position: 2,
-          },
-          {
-            title: "TS avec Next.js",
-            externalUrl:
-              "https://nextjs.org/docs/app/building-your-application/configuring/typescript",
-            startDate: new Date(),
-            dueDate: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000),
-            status: ModuleStatus.todo,
-            position: 3,
-          },
-        ],
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14), // il y a 2 semaines
+      updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 1), // hier
+    },
+  });
+
+  await prisma.trackTag.createMany({
+    data: [
+      {
+        trackId: track1.id,
+        tagId: tags.find((t) => t.name === "TypeScript")!.id,
       },
-    },
-    include: { modules: true },
+      {
+        trackId: track1.id,
+        tagId: tags.find((t) => t.name === "Front-End")!.id,
+      },
+    ],
+    skipDuplicates: true,
   });
 
-  // 3) Historisation (ModuleCheck) – optionnel
-  const firstModule = track.modules[0];
-  await prisma.moduleCheck.create({
+  // --- Modules du premier parcours
+  const mod1 = await prisma.module.create({
     data: {
-      moduleId: firstModule.id,
-      oldStatus: "todo",
-      newStatus: firstModule.status,
-      note: "Module démarré lors du seed",
+      trackId: track1.id,
+      title: "Bases du Typage",
+      externalUrl:
+        "https://www.typescriptlang.org/docs/handbook/2/basic-types.html",
+      startDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 10),
+      dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+      status: ModuleStatus.done,
+      position: 1,
     },
   });
 
-  // 4) Tags (optionnel)
-  const tagTs = await prisma.tag.upsert({
-    where: { name: "TypeScript" },
-    update: {},
-    create: { name: "TypeScript" },
-  });
-  await prisma.trackTag.upsert({
-    where: {
-      trackId_tagId: { trackId: track.id, tagId: tagTs.id },
-    },
-    update: {},
-    create: {
-      trackId: track.id,
-      tagId: tagTs.id,
+  const mod2 = await prisma.module.create({
+    data: {
+      trackId: track1.id,
+      title: "Interfaces et Classes",
+      externalUrl:
+        "https://www.typescriptlang.org/docs/handbook/2/classes.html",
+      startDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 6),
+      dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+      status: ModuleStatus.in_progress,
+      position: 2,
     },
   });
 
-  // 5) Reminder (optionnel)
-  await prisma.reminder.create({
+  const mod3 = await prisma.module.create({
+    data: {
+      trackId: track1.id,
+      title: "Génériques et Avancé",
+      externalUrl:
+        "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+      startDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
+      dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2),
+      status: ModuleStatus.todo,
+      position: 3,
+    },
+  });
+
+  // --- Checks d'activité pour les modules
+  await prisma.moduleCheck.createMany({
+    data: [
+      {
+        moduleId: mod1.id,
+        oldStatus: ModuleStatus.todo,
+        newStatus: ModuleStatus.in_progress,
+        note: "Début du module",
+        changedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 9),
+      },
+      {
+        moduleId: mod1.id,
+        oldStatus: ModuleStatus.in_progress,
+        newStatus: ModuleStatus.done,
+        note: "Complété les exercices de typage",
+        changedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 7),
+      },
+      {
+        moduleId: mod2.id,
+        oldStatus: ModuleStatus.todo,
+        newStatus: ModuleStatus.in_progress,
+        note: "Commencé les classes",
+        changedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5),
+      },
+    ],
+  });
+
+  // --- Deuxième parcours : "Roadmap React Avancée"
+  const track2 = await prisma.track.create({
     data: {
       userId: user.id,
-      trackId: track.id,
-      moduleId: firstModule.id,
-      runAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      message: "Pense à avancer sur le module 1 !",
+      title: "Roadmap React Avancée",
+      description:
+        "Approfondissement de React avec les hooks personnalisés, la gestion d’état et les bonnes pratiques.",
+      goals:
+        "Comprendre les hooks avancés, le contexte et optimiser les performances de rendu.",
+      status: TrackStatus.draft,
+      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4),
+      updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
     },
+  });
+
+  await prisma.trackTag.createMany({
+    data: [
+      { trackId: track2.id, tagId: tags.find((t) => t.name === "React")!.id },
+      { trackId: track2.id, tagId: tags.find((t) => t.name === "Next.js")!.id },
+      {
+        trackId: track2.id,
+        tagId: tags.find((t) => t.name === "Front-End")!.id,
+      },
+    ],
+    skipDuplicates: true,
+  });
+
+  const modA = await prisma.module.create({
+    data: {
+      trackId: track2.id,
+      title: "Hooks avancés",
+      externalUrl: "https://react.dev/reference/react",
+      startDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
+      dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2),
+      status: ModuleStatus.in_progress,
+      position: 1,
+    },
+  });
+
+  const modB = await prisma.module.create({
+    data: {
+      trackId: track2.id,
+      title: "Context et Reducer",
+      externalUrl:
+        "https://react.dev/learn/scaling-up-with-reducer-and-context",
+      startDate: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
+      dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 4),
+      status: ModuleStatus.todo,
+      position: 2,
+    },
+  });
+
+  await prisma.moduleCheck.createMany({
+    data: [
+      {
+        moduleId: modA.id,
+        oldStatus: ModuleStatus.todo,
+        newStatus: ModuleStatus.in_progress,
+        note: "Découverte des hooks personnalisés",
+        changedAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2),
+      },
+    ],
   });
 
   console.log("Seed terminé ✅");

@@ -1,7 +1,9 @@
+// components/TrackForm.tsx
 "use client";
 
 import * as React from "react";
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,18 +16,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createTrack, updateTrack } from "@/lib/actions/track";
-import { useRouter } from "next/navigation";
+import { TagSelector } from "./TagSelector";
+
+type BaseValues = {
+  title: string;
+  description?: string;
+  goals?: string;
+  status: "draft" | "published";
+  tags: string[];
+};
 
 type Props =
-  | { mode: "create"; defaultValues?: Partial<TrackFormValues> }
-  | { mode: "edit"; id: string; defaultValues: TrackFormValues };
-
-type TrackFormValues = {
-  title: string;
-  description?: string | null;
-  goals?: string | null;
-  status: "draft" | "published";
-};
+  | { mode: "create"; defaultValues?: Partial<BaseValues>; id?: never }
+  | { mode: "edit"; id: string; defaultValues: BaseValues };
 
 export function TrackForm(props: Props) {
   const isEdit = props.mode === "edit";
@@ -33,17 +36,15 @@ export function TrackForm(props: Props) {
   const [pending, startTransition] = useTransition();
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
-  const [values, setValues] = useState<TrackFormValues>({
+  const [values, setValues] = useState<BaseValues>({
     title: props.defaultValues?.title ?? "",
     description: props.defaultValues?.description ?? "",
     goals: props.defaultValues?.goals ?? "",
-    status: (props.defaultValues?.status as "draft" | "published") ?? "draft",
+    status: (props.defaultValues?.status as any) ?? "draft",
+    tags: props.defaultValues?.tags ?? [],
   });
 
-  function handleChange<K extends keyof TrackFormValues>(
-    key: K,
-    v: TrackFormValues[K]
-  ) {
+  function set<K extends keyof BaseValues>(key: K, v: BaseValues[K]) {
     setValues((s) => ({ ...s, [key]: v }));
   }
 
@@ -55,6 +56,7 @@ export function TrackForm(props: Props) {
     fd.append("description", values.description || "");
     fd.append("goals", values.goals || "");
     fd.append("status", values.status);
+    fd.append("tags", JSON.stringify(values.tags || []));
 
     setErrors({});
     startTransition(async () => {
@@ -63,8 +65,7 @@ export function TrackForm(props: Props) {
         if ((res as any).errors) setErrors((res as any).errors);
         return;
       }
-      if (!isEdit && res.id) router.push(`/tracks/${res.id}`);
-      else router.refresh();
+      router.refresh();
     });
   }
 
@@ -75,8 +76,8 @@ export function TrackForm(props: Props) {
         <Input
           id="title"
           value={values.title}
-          onChange={(e) => handleChange("title", e.target.value)}
-          placeholder="Ex: Apprendre React de A à Z"
+          onChange={(e) => set("title", e.target.value)}
+          placeholder="Ex: « Roadmap TypeScript »"
           required
         />
         {errors?.title && (
@@ -88,10 +89,10 @@ export function TrackForm(props: Props) {
         <Label htmlFor="description">Description</Label>
         <Textarea
           id="description"
-          value={values.description ?? ""}
-          onChange={(e) => handleChange("description", e.target.value)}
-          placeholder="Contexte, contenu, attentes…"
+          value={values.description}
+          onChange={(e) => set("description", e.target.value)}
           rows={4}
+          placeholder="Objectif général, sources, etc."
         />
         {errors?.description && (
           <p className="text-sm text-red-600">
@@ -104,10 +105,10 @@ export function TrackForm(props: Props) {
         <Label htmlFor="goals">Objectifs</Label>
         <Textarea
           id="goals"
-          value={values.goals ?? ""}
-          onChange={(e) => handleChange("goals", e.target.value)}
-          placeholder="Objectifs du parcours (liste libre)"
-          rows={3}
+          value={values.goals}
+          onChange={(e) => set("goals", e.target.value)}
+          rows={4}
+          placeholder="Compétences visées, jalons, critères de succès…"
         />
         {errors?.goals && (
           <p className="text-sm text-red-600">{errors.goals.join(", ")}</p>
@@ -118,9 +119,7 @@ export function TrackForm(props: Props) {
         <Label>Statut</Label>
         <Select
           value={values.status}
-          onValueChange={(v: "draft" | "published") =>
-            handleChange("status", v)
-          }
+          onValueChange={(v: any) => set("status", v)}
         >
           <SelectTrigger className="w-[220px]">
             <SelectValue placeholder="Choisir…" />
@@ -130,6 +129,20 @@ export function TrackForm(props: Props) {
             <SelectItem value="published">Publié</SelectItem>
           </SelectContent>
         </Select>
+        {errors?.status && (
+          <p className="text-sm text-red-600">{errors.status.join(", ")}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label>Tags</Label>
+        <TagSelector
+          defaultTags={values.tags}
+          onChange={(t) => set("tags", t)}
+        />
+        {errors?.tags && (
+          <p className="text-sm text-red-600">{errors.tags.join(", ")}</p>
+        )}
       </div>
 
       <div className="flex gap-3">
@@ -137,6 +150,10 @@ export function TrackForm(props: Props) {
           {isEdit ? "Enregistrer" : "Créer le parcours"}
         </Button>
       </div>
+
+      {errors?.form && (
+        <p className="text-sm text-red-600">{errors.form.join(", ")}</p>
+      )}
     </form>
   );
 }

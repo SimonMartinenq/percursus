@@ -1,4 +1,4 @@
-//(app)/track/page.tsx
+// (app)/tracks/page.tsx
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,14 +26,14 @@ export default async function TracksPage({
 }) {
   const user = await requireUser();
   searchParams = await searchParams;
-  // Charger tous les tags disponibles pour ce user
+
+  // Tags dispos (pour suggestions)
   const tags = await prisma.tag.findMany({
     where: { trackTags: { some: { track: { userId: user.id } } } },
     select: { name: true },
   });
   const availableTags = tags.map((t) => t.name);
 
-  // Construction du filtre Prisma
   const where: any = {
     userId: user.id,
     ...(searchParams?.q
@@ -68,7 +68,6 @@ export default async function TracksPage({
       : {}),
   };
 
-  // Tri
   const [sortField, sortOrder] = (searchParams?.sort as string)?.split("_") ?? [
     "updatedAt",
     "desc",
@@ -77,10 +76,12 @@ export default async function TracksPage({
   const tracks = await prisma.track.findMany({
     where,
     orderBy: { [sortField]: sortOrder },
-    include: { modules: { select: { status: true } } },
+    include: {
+      modules: { select: { status: true } },
+      trackTags: { include: { tag: true } },
+    },
   });
 
-  // Progression
   const progressMin = Number(searchParams?.progressMin ?? 0);
   const progressMax = Number(searchParams?.progressMax ?? 100);
 
@@ -135,6 +136,15 @@ export default async function TracksPage({
                   <p className="line-clamp-3 text-sm text-muted-foreground">
                     {t.description || "—"}
                   </p>
+                  {t.trackTags.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {t.trackTags.map((tt) => (
+                        <Badge key={tt.tag.name} variant="outline">
+                          {tt.tag.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                   <p className="mt-4 text-xs text-muted-foreground">
                     MAJ : {new Date(t.updatedAt).toLocaleString()}
                   </p>
