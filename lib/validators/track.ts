@@ -3,7 +3,6 @@ import { z } from "zod";
 
 export const trackStatusEnum = z.enum(["draft", "published"]);
 
-// Règles pour un nom de tag : trim, longueur, charset simple
 export const tagNameSchema = z
   .string()
   .trim()
@@ -28,9 +27,6 @@ export const trackCreateSchema = z.object({
   description: z.string().max(5000).optional().or(z.literal("")),
   goals: z.string().max(5000).optional().or(z.literal("")),
   status: trackStatusEnum.default("draft"),
-  // tags peut venir sous 2 formes :
-  //  - tableau déjà parsé
-  //  - string JSON (cas FormData) -> on parse puis on valide
   tags: z
     .union([
       tagsArraySchema,
@@ -49,6 +45,5 @@ export const trackCreateSchema = z.object({
 
 export const trackUpdateSchema = trackCreateSchema.partial().extend({
   id: z.string().cuid("ID invalide"),
-  // On autorise explicitement tags dans l'update (même logique que create)
   tags: trackCreateSchema.shape.tags.optional(),
 });

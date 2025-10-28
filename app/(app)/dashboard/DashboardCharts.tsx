@@ -23,7 +23,6 @@ interface DashboardChartsProps {
 export function DashboardCharts({
   weeklyData,
   dailyData,
-  statusData,
   performance,
 }: DashboardChartsProps) {
   return (

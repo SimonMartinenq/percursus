@@ -2,9 +2,9 @@
 
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { deleteTrack } from "@/lib/actions/track";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { deleteTrack } from "@/actions/track";
 
 export function DeleteTrackButton({ id }: { id: string }) {
   const [pending, startTransition] = useTransition();
@@ -15,8 +15,7 @@ export function DeleteTrackButton({ id }: { id: string }) {
     fd.append("id", id);
     startTransition(async () => {
       try {
-        const reponse = await deleteTrack(fd); // redirige côté serveur
-        console.log("RESPONSE ISI", reponse);
+        await deleteTrack(fd); // redirige côté serveur
         toast.success("Parcours supprimé avec succès");
       } catch (e) {
         console.log("ERROR", e);

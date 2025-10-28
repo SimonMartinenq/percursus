@@ -11,7 +11,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [GitHub, Google],
   callbacks: {
     async redirect({ url, baseUrl }) {
-      // Après connexion, redirige vers /dashboard
       if (url.startsWith("/")) return `${baseUrl}/dashboard`;
       return baseUrl;
     },

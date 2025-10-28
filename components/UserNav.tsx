@@ -52,9 +52,7 @@ export function UserNav() {
           {user.name ?? "Utilisateur"}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => (window.location.href = "/app/settings")}
-        >
+        <DropdownMenuItem onClick={() => (window.location.href = "/settings")}>
           Réglages
         </DropdownMenuItem>
         <DropdownMenuSeparator />

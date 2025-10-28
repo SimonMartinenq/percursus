@@ -7,12 +7,10 @@ export async function middleware(req: NextRequest) {
   const session = await auth();
   const { pathname } = req.nextUrl;
 
-  // Si connecté et sur la page d'accueil -> /dashboard
   if (pathname === "/" && session?.user) {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
-  // Si non connecté et sur /dashboard -> /
   if (
     (pathname.startsWith("/dashboard") ||
       pathname.startsWith("/calendar") ||
@@ -22,10 +20,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // Sinon, continuer normalement
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/", "/dashboard/:path*", "/calendar/:path*", "/tracks/:path*"], // Intercepte juste les pages concernées
+  matcher: [
+    "/",
+    "/dashboard/:path*",
+    "/calendar/:path*",
+    "/tracks/:path*",
+    "/settings/:path*",
+  ],
 };

@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   BookOpen,
   CalendarDays,
-  BarChart3,
   Settings,
 } from "lucide-react";
 import {
@@ -19,14 +18,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarFooter,
-  SidebarRail, // <— ajoute ceci
+  SidebarRail,
 } from "@/components/ui/sidebar";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/tracks", label: "Parcours", icon: BookOpen },
   { href: "/calendar", label: "Calendrier", icon: CalendarDays },
-  { href: "/analytics", label: "Statistiques", icon: BarChart3 },
   { href: "/settings", label: "Réglages", icon: Settings },
 ];
 
@@ -35,7 +33,6 @@ export function AppSidebar() {
 
   return (
     <Sidebar variant="floating" collapsible="icon">
-      {/* Rail visible quand la sidebar est réduite */}
       <SidebarRail />
 
       <SidebarContent>

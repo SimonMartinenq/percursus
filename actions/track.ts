@@ -4,22 +4,20 @@
 import { revalidatePath } from "next/cache";
 import { trackCreateSchema, trackUpdateSchema } from "@/lib/validators/track";
 import { z } from "zod";
-import { requireUser } from "../auth-helper";
 import { prisma } from "@/prisma";
 import { TrackStatus } from "@prisma/client";
-import { upsertManyTagsByName } from "@/lib/actions/tag";
-import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth-helper";
+import { upsertManyTagsByName } from "./tag";
 
 export async function createTrack(formData: FormData) {
   const user = await requireUser();
 
-  // On construit un objet brut à partir du FormData
   const raw = {
     title: formData.get("title"),
     description: formData.get("description"),
     goals: formData.get("goals"),
     status: formData.get("status") || "draft",
-    tags: formData.get("tags") ?? "[]", // string JSON ou tableau déjà géré par le schema
+    tags: formData.get("tags") ?? "[]",
   };
 
   const parsed = trackCreateSchema.safeParse(raw);
@@ -64,7 +62,7 @@ export async function updateTrack(formData: FormData) {
     description: formData.get("description"),
     goals: formData.get("goals"),
     status: formData.get("status") || undefined,
-    tags: formData.get("tags") ?? undefined, // si absent on ne touche pas; si présent (même vide) on remplace
+    tags: formData.get("tags") ?? undefined,
   };
 
   const parsed = trackUpdateSchema.safeParse(raw);

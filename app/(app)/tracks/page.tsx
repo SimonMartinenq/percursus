@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { requireUser } from "@/lib/auth-helper";
 import { prisma } from "@/prisma";
-import { TrackForm } from "@/components/TrackForm";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { computeProgress } from "@/lib/utils";
@@ -21,7 +20,6 @@ export default async function TracksPage({
   const user = await requireUser();
   searchParams = await searchParams;
 
-  // Tags dispos (pour suggestions)
   const tags = await prisma.tag.findMany({
     where: { trackTags: { some: { track: { userId: user.id } } } },
     select: { name: true },

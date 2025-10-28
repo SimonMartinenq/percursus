@@ -1,7 +1,7 @@
 // (app)/tracks/[id]/page.tsx
 import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { deleteTrack, updateTrack } from "@/lib/actions/track";
+
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,10 +18,10 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth-helper";
 import { prisma } from "@/prisma";
 import { TrackForm } from "@/components/TrackForm";
-import { deleteModule } from "@/lib/actions/module";
 import { ModuleForm } from "@/components/ModuleForm";
 import { Progress } from "@/components/ui/progress";
 import { DeleteTrackButton } from "@/components/DeleteTrackButton";
+import { deleteModule } from "@/actions/module";
 
 export default async function TrackDetailPage({
   params,

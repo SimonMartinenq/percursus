@@ -10,7 +10,7 @@ import { X } from "lucide-react";
 type Props = {
   defaultTags?: string[];
   onChange?: (tags: string[]) => void;
-  suggestions?: string[]; // tu peux lui passer tes tags disponibles si tu veux de l'auto-complétion simple
+  suggestions?: string[];
 };
 
 export function TagSelector({
@@ -100,7 +100,6 @@ export function TagSelector({
         ))}
       </div>
 
-      {/* Champ caché pour le FormData */}
       <input type="hidden" name="tags" value={JSON.stringify(tags)} />
     </div>
   );

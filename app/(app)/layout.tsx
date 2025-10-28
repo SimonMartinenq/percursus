@@ -2,7 +2,6 @@
 
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
-import { Sidebar } from "@/components/Sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "sonner";
 

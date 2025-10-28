@@ -75,7 +75,6 @@ export function SearchBar() {
 
       {open && (results.tracks.length > 0 || results.modules.length > 0) && (
         <Card className="absolute top-full mt-2 w-full shadow-lg border bg-popover z-50">
-          {/* --- Résultats Parcours --- */}
           {results.tracks.length > 0 && (
             <div className="p-2">
               <p className="text-xs text-muted-foreground mb-1">Parcours</p>
@@ -97,7 +96,6 @@ export function SearchBar() {
             </div>
           )}
 
-          {/* --- Résultats Modules --- */}
           {results.modules.length > 0 && (
             <div className="p-2 border-t">
               <p className="text-xs text-muted-foreground mb-1">Modules</p>

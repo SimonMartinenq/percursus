@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createTrack, updateTrack } from "@/lib/actions/track";
+import { createTrack, updateTrack } from "@/actions/track";
 import { TagSelector } from "./TagSelector";
 import { toast } from "sonner";
 
